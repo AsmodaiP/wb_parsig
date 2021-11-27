@@ -130,7 +130,7 @@ def update_sheet():
                                 if int(position_in_table) != position:
                                     delta = position - int(position_in_table)
                                     delta_str = f'+{delta}' if delta>0 else f'{delta}'
-                                    bot.send_message(id,f'Товар [«{row[4]}»](https://www.wildberries.ru/catalog/{articulus}/detail.aspx?targetUrl=SP) теперь на позиции {position}({delta_str})', parse_mode='Markdown')
+                                    bot.send_message(id,f'Товар [«{row[4]}»](https://www.wildberries.ru/catalog/{articulus}/detail.aspx?targetUrl=SP) теперь на позиции {position}({delta_str}) \n По запросу «» {query}', parse_mode='Markdown')
                         except IndexError:
                                 bot.send_message(id,f'Товар [«{row[4]}»](https://www.wildberries.ru/catalog/{articulus}/detail.aspx?targetUrl=SP) теперь на позиции {position}', parse_mode='Markdown')
                         except Exception as e:
