@@ -1,19 +1,12 @@
 import logging
-import requests
 from bs4 import BeautifulSoup
 # import pandas
 # from pandas import ExcelWriter
 # import openpyxl
-import lxml
-from urllib.request import Request, urlopen
-import re
-import csv
 from selenium.webdriver.firefox.options import Options
 import time
 # from bs4 import BeautifulSoup
-import json
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 import os
 from logging.handlers import RotatingFileHandler
 
@@ -41,6 +34,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 #         console_handler
 #     )
 # )
+
 
 def get_html(url):
     options = Options()
@@ -100,7 +94,7 @@ def get_raiting(html):
     soup = BeautifulSoup(html, 'lxml')
     raiting = soup.find('span', class_='user-scores__score')
     if raiting is None:
-        logging.info(f'Raiting = 0')
+        logging.info('Raiting = 0')
         return 0
     rt = raiting.get_text().replace('.', ',')
     logging.info(f'Raiting = {rt}')

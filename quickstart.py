@@ -3,19 +3,12 @@ from logging.handlers import RotatingFileHandler
 import logging
 import os.path
 from bs4 import BeautifulSoup
-import dotenv
-from dotenv.main import load_dotenv
 from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
 from google.oauth2 import service_account
 from parsing import get_detail_info, get_html
 import datetime as dt
 import telebot
 from dotenv import load_dotenv
-
-
 
 
 load_dotenv()
@@ -36,8 +29,6 @@ INDEX_OF_FIRST = 1
 SAMPLE_SPREADSHEET_ID = '1m_IcullUpEP4yOOnOH7ojBzbPpn38tFtVNyS40yKJjQ'
 SAMPLE_RANGE_NAME = '04.2021'
 START_POSITION_FOR_PLACE = 17
-
-
 
 
 log_dir = os.path.join(BASE_DIR, 'logs/')
@@ -103,14 +94,16 @@ def update_sheet():
                     new_query = row[5]
                     if len(new_query) > 0:
                         query = new_query
-                    logging.info(f'Получение детальной информации для {row[4]}, {articulus}')
+                    logging.info(
+                        f'Получение детальной информации для {row[4]}, {articulus}')
                     info = get_detail_info(articulus)
                     if info['price'] != ' ':
                         position = get_position(articulus, query)
-                    else: 
+                    else:
                         position = 1000
                     logging.info(f'Позиция в выдаче {position}')
-                    letter_for_range = convert_to_column_letter(position_for_place)
+                    letter_for_range = convert_to_column_letter(
+                        position_for_place)
                     body = {
                         'valueInputOption': 'USER_ENTERED',
                         'data': [
@@ -118,26 +111,29 @@ def update_sheet():
                             {'range': f'K{i}:L{i}', 'values': [
                                 [info['raiting'], info['reviewCount']]]},
                             {'range': f'{letter_for_range}{i}',
-                            'values': [[position]]},
+                             'values': [[position]]},
                         ]
                     }
                     sheet.values().batchUpdate(spreadsheetId=SAMPLE_SPREADSHEET_ID, body=body).execute()
-                    
+
                     for id in ID_FOR_NOTIFICATION:
                         try:
                             position_in_table = row[position_for_place-1]
                             if position_in_table != '\n':
                                 if int(position_in_table) != position:
                                     delta = position - int(position_in_table)
-                                    delta_str = f'+{delta}' if delta>0 else f'{delta}'
-                                    bot.send_message(id,f'Товар [«{row[4]}»](https://www.wildberries.ru/catalog/{articulus}/detail.aspx?targetUrl=SP) теперь на позиции {position}({delta_str}) \n По запросу «» {query}', parse_mode='Markdown')
+                                    delta_str = f'+{delta}' if delta > 0 else f'{delta}'
+                                    bot.send_message(
+                                        id, f'Товар [«{row[4]}»](https://www.wildberries.ru/catalog/{articulus}/detail.aspx?targetUrl=SP) теперь на позиции {position}({delta_str}) \n По запросу «» {query}', parse_mode='Markdown')
                         except IndexError:
-                                bot.send_message(id,f'Товар [«{row[4]}»](https://www.wildberries.ru/catalog/{articulus}/detail.aspx?targetUrl=SP) теперь на позиции {position}', parse_mode='Markdown')
+                            bot.send_message(
+                                id, f'Товар [«{row[4]}»](https://www.wildberries.ru/catalog/{articulus}/detail.aspx?targetUrl=SP) теперь на позиции {position}', parse_mode='Markdown')
                         except Exception as e:
-                            logging.error(f'Чат {id} не инициализирован или  другая ошибка', exc_info=e)
+                            logging.error(
+                                f'Чат {id} не инициализирован или  другая ошибка', exc_info=e)
             except Exception as e:
                 logging.info(f'С {articulus} что-то не так')
-                logging.error('ошибка',exc_info=e)
+                logging.error('ошибка', exc_info=e)
 
             i += 1
 
@@ -172,8 +168,8 @@ def get_position(articulus, query):
         # И если наш товар на ней, то считаем, сколько нерекламных до него
         if page == 1:
             advertisements = soup.find_all('div', class_='advert-card-item')
-            if  not card_product is None:
-                all_cards =  soup.find_all('div', class_='product-card')
+            if not card_product is None:
+                all_cards = soup.find_all('div', class_='product-card')
                 for card in all_cards:
                     if not 'advert-card-item' in card['class']:
                         count += 1
@@ -199,9 +195,6 @@ def convert_to_column_letter(column_number):
         column_letter = chr(c+65)+column_letter
         column_number = (column_number-c)//26
     return column_letter
-
-
-
 
 
 def main():
