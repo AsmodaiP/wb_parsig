@@ -3,6 +3,8 @@ from logging.handlers import RotatingFileHandler
 import logging
 import os.path
 from bs4 import BeautifulSoup
+import dotenv
+from dotenv.main import load_dotenv
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -10,6 +12,18 @@ from google.oauth2.credentials import Credentials
 from google.oauth2 import service_account
 from parsing import get_detail_info, get_html
 import datetime as dt
+import telebot
+from dotenv import load_dotenv
+
+
+
+
+load_dotenv()
+
+TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
+ID_FOR_NOTIFICATION = os.environ['ID_FOR_NOTIFICATION'].split(',')
+
+bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
@@ -64,9 +78,7 @@ def get_WB_articuls_and_query(colum_of_articul=7, colum_of_query=5):
     return articuls_and_query_dict
 
 
-blacklist = [
-
-]
+blacklist = []
 
 
 def update_sheet():
@@ -109,10 +121,24 @@ def update_sheet():
                             'values': [[position]]},
                         ]
                     }
-                    # print(body['data'])
                     sheet.values().batchUpdate(spreadsheetId=SAMPLE_SPREADSHEET_ID, body=body).execute()
-            except:
+                    
+                    for id in ID_FOR_NOTIFICATION:
+                        try:
+                            position_in_table = row[position_for_place-1]
+                            if position_in_table != '\n':
+                                if int(position_in_table) != position:
+                                    delta = position - int(position_in_table)
+                                    delta_str = f'+{delta}' if delta>0 else f'{delta}'
+                                    bot.send_message(id,f'Товар [«{row[4]}»](https://www.wildberries.ru/catalog/{articulus}/detail.aspx?targetUrl=SP) теперь на позиции {position}({delta_str})', parse_mode='Markdown')
+                        except IndexError:
+                                bot.send_message(id,f'Товар [«{row[4]}»](https://www.wildberries.ru/catalog/{articulus}/detail.aspx?targetUrl=SP) теперь на позиции {position}', parse_mode='Markdown')
+                        except Exception as e:
+                            logging.error(f'Чат {id} не инициализирован или  другая ошибка', exc_info=e)
+            except Exception as e:
                 logging.info(f'С {articulus} что-то не так')
+                logging.error('ошибка',exc_info=e)
+
             i += 1
 
 
@@ -177,21 +203,11 @@ def convert_to_column_letter(column_number):
 
 
 
+
 def main():
-    update_sheet()
+    while True:
+        update_sheet()
 
 
 if __name__ == '__main__':
     main()
-    # print(get_position('18259329','брюки женские палаццо'))
-
-    # count_of_advertisement = 0
-    # page = 1
-    # search_url = f'https://www.wildberries.ru/catalog/zhenshchinam/odezhda/platya?sort=popular&page={page}'
-    # soup = BeautifulSoup(get_html(search_url), 'lxml')
-    # cards = soup.find_all('div', class_='product-card')
-    # print(cards[0].find_all('div', class_='advert-card-item'))
-    # # print(cards[0].find_all('div', class_='product-card__wrapper'))
-    #     # print(soup2.find_all('div', class_='advert-card-item'))
-    # print(len(count_of_advertisement))
-    

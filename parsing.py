@@ -24,30 +24,30 @@ headers = {
 }
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-log_dir = os.path.join(BASE_DIR, 'logs/')
-log_file = os.path.join(BASE_DIR, 'logs/parsing.log')
-console_handler = logging.StreamHandler()
-file_handler = RotatingFileHandler(
-    log_file,
-    maxBytes=100000,
-    backupCount=3,
-    encoding='utf-8'
-)
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s, %(levelname)s, %(message)s',
-    handlers=(
-        file_handler,
-        console_handler
-    )
-)
+# log_dir = os.path.join(BASE_DIR, 'logs/')
+# log_file = os.path.join(BASE_DIR, 'logs/parsing.log')
+# console_handler = logging.StreamHandler()
+# file_handler = RotatingFileHandler(
+#     log_file,
+#     maxBytes=100000,
+#     backupCount=3,
+#     encoding='utf-8'
+# )
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format='%(asctime)s, %(levelname)s, %(message)s',
+#     handlers=(
+#         file_handler,
+#         console_handler
+#     )
+# )
 
 def get_html(url):
     options = Options()
     options.headless = False
     driver = webdriver.Firefox(options=options)
     driver.get(url)
-    SCROLL_PAUSE_TIME = 3
+    SCROLL_PAUSE_TIME = 4
 
     last_height = driver.execute_script("return document.body.scrollHeight")
     while True:
