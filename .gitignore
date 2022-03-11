@@ -1,0 +1,16 @@
+nohup.out
+*.txt
+*.pdf
+.env
+/venv
+/logs
+/pdf
+*.xlsx
+*.json
+*.svg
+*.log
+/__pycache__
+*.save*
+*.jar
+culic*
+*.tar*
