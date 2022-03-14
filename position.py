@@ -15,13 +15,13 @@ load_dotenv()
 
 load_dotenv()
 
-#получаем имя клиента капсом
+
 client = os.path.splitext (os.path.basename (sys.argv [0]))[0].split('_')[0].upper()
 
 TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
 ID_FOR_NOTIFICATION = os.environ['ID_FOR_NOTIFICATION'].split(',')
-#берем соответвтующей id в .env
-SPREADSHEET_ID = os.environ[f'{client}_SPREADSHEET_ID']
+# #берем соответвтующей id в .env
+SPREADSHEET_ID = None
 RANGE_NAME = os.environ['RANGE_NAME']
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
@@ -79,12 +79,12 @@ def get_WB_articuls_and_query(colum_of_articul=7, colum_of_query=5):
 blacklist = []
 
 
-def update_sheet():
+def update_sheet(spreadsheet_id, range_name):
     position_for_place = START_POSITION_FOR_PLACE + (dt.date.today().day-1)*6
     service = build('sheets', 'v4', credentials=credentials)
     sheet = service.spreadsheets()
-    result = sheet.values().get(spreadsheetId=SPREADSHEET_ID,
-                                range=RANGE_NAME, majorDimension='ROWS').execute()
+    result = sheet.values().get(spreadsheetId=spreadsheet_id,
+                                range=range_name, majorDimension='ROWS').execute()
     values = result.get('values', [])
     if not values:
         print('No data found.')
@@ -123,12 +123,12 @@ def update_sheet():
                         'valueInputOption': 'USER_ENTERED',
                         'data': [
 
-                            {'range': f'{RANGE_NAME}!{letter_for_range}{i}',
+                            {'range': f'{range_name}!{letter_for_range}{i}',
                              'values': [[position]]},
                         ]
                     }
                     logging.info(body)
-                    sheet.values().batchUpdate(spreadsheetId=SPREADSHEET_ID, body=body).execute()
+                    sheet.values().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
                     bot.send_message(295481377, f'Товар [«{row[4]}»](https://www.wildberries.ru/catalog/{articulus}/detail.aspx?targetUrl=SP)  \n По запросу {query} на позиции {position} ', parse_mode='Markdown')
             except Exception as e:
                 logging.info(f'С {articulus} что-то не так')
@@ -202,14 +202,14 @@ def convert_to_column_letter(column_number):
 
 def main():
     while True:
-        update_sheet()
+        update_sheet(SPREADSHEET_ID)
 
 def check_sheet_exitst_by_title(title):
     service = build('sheets', 'v4', credentials=credentials)
     sheet_metadata = service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
     sheets = sheet_metadata.get('sheets', '')
     for item in sheets:
-        if item.get("properties").get('title') == title:
+        if item.get('properties').get('title') == title:
             return True
         return False
 

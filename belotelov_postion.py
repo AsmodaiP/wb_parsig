@@ -1,7 +1,7 @@
 
 import os
 import sys
-from card import update_sheet
+from position import update_sheet
 import datetime as dt
 # получаем имя клиента капсом
 client = os.path.splitext (os.path.basename (sys.argv [0]))[0].split('_')[0].upper()
