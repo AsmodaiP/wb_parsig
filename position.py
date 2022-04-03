@@ -97,7 +97,7 @@ def update_sheet(spreadsheet_id, range_name):
                 continue
             try:
                 articulus = row[7]
-                price = row[8]
+                price = row[11]
                 logging.info(f'{articulus} {price}')
                 position_for_place = START_POSITION_FOR_PLACE + (dt.date.today().day-1)*6
                 if articulus.isdigit():

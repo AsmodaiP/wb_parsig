@@ -1,4 +1,5 @@
 
+import json
 from logging.handlers import RotatingFileHandler
 import logging
 import os.path
@@ -19,10 +20,13 @@ client = os.path.splitext (os.path.basename (sys.argv [0]))[0].split('_')[0].upp
 
 TELEGRAM_TOKEN = os.environ['TELEGRAM_TOKEN']
 ID_FOR_NOTIFICATION = os.environ['ID_FOR_NOTIFICATION'].split(',')
-SPREADSHEET_ID = os.environ[f'{client}_SPREADSHEET_ID']
+TOKEN_FOR_REVIEWS = os.environ['TOKEN_FOR_REVIEWS']
+ID_FOR_REVIEWS = os.environ['ID_FOR_REVIEWS']
+SPREADSHEET_ID = None
 RANGE_NAME = os.environ['RANGE_NAME']
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
+bot_for_reviews=telebot.TeleBot(TOKEN_FOR_REVIEWS)
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
@@ -80,7 +84,7 @@ def get_body(range_name, i, info, prev_price):
         body['data'] +=  {'range': f'{range_name}!I{i}', 'values': [[f'{prev_price} {dt.datetime.now().strftime("%H:%M  %d.%m")}']]},
     return body
 
-def update_sheet(spreadsheet_id, range_name):
+def update_sheet(spreadsheet_id, range_name, check_review=False):
     service = build('sheets', 'v4', credentials=credentials)
     sheet = service.spreadsheets()
     result = sheet.values().get(spreadsheetId=spreadsheet_id,
@@ -97,6 +101,8 @@ def update_sheet(spreadsheet_id, range_name):
                     logging.info(
                         f'Получение детальной информации для {row[4]}, {articulus}')
                     info = get_detail_info(articulus)
+                    if check_review:
+                        check_last_review(articulus, info['last_review'], row[4])
                     body = get_body(range_name, i, info, prev_price=row[9])
 
 
@@ -129,6 +135,31 @@ def check_sheet_exitst_by_title(title):
             return True
         return False
 
+def check_last_review(articul, review, name):
+    
+    if review['raiting'] is None:
+        return
+    with open('reviews.json', 'r') as f:
+        reviews = json.load(f)
+        if articul in reviews:
+            last_date = reviews[articul]['date']
+            if int(review['raiting']) < 6 and review['date'] != last_date:
+                print(review)
+                bot_for_reviews.send_message(
+                    ID_FOR_REVIEWS,
+                    f'Негативный неотвеченный отзыв ({review["raiting"]} звезды) на товар [«{name}»](https://www.wildberries.ru/catalog/{articul}/detail.aspx?targetUrl=SP)',
+                    disable_web_page_preview=True,
+                    parse_mode='Markdown')
+        elif int(review['raiting'])< 6:
+            bot_for_reviews.send_message(
+                ID_FOR_REVIEWS,
+                f'Негативный неотвеченный отзыв ({review["raiting"]} звезды) на товар [«{name}»](https://www.wildberries.ru/catalog/{articul}/detail.aspx?targetUrl=SP)',
+                disable_web_page_preview=True,
+                parse_mode='Markdown')
+        reviews[articul] = review
+    with open('reviews.json', 'w') as f:
+        json.dump(reviews, f, indent=4)
 if __name__ == '__main__':
-    # main()
+    
+    bot_for_reviews.send_message(1126541068, '22')
     pass
