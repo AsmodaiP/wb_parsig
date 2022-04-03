@@ -117,8 +117,32 @@ def get_detail_info(id):
         'articul': id,
         'price': get_price_for_visa_and_MC(html),
         'reviewCount': get_review_count(html),
-        'raiting': get_raiting(html)
+        'raiting': get_raiting(html),
+        'last_review': get_last_review(html)
     }
     logging.info(info)
     return info
  
+def get_last_review(html):
+    last_review_rating = last_review_date = 0
+    soup = BeautifulSoup(html, 'lxml')
+    last_feedback = soup.find('li', class_='comments__item feedback')
+    try:
+        last_review_date = soup.find('span', class_='feedback__date').get('content')
+        last_review_rating = soup.find('span', class_='feedback__rating').get('class')[-1][-1]
+        feedback_reply = last_feedback.find('div', class_='feedback__sellers-reply')
+
+        return {
+            'raiting': last_review_rating,
+            'date': last_review_date,
+            'feedback_reply': True if feedback_reply else False
+        }
+    except:
+        return {
+            'raiting': None,
+            'date': last_review_date,
+        }
+
+if __name__ == '__main__':
+    get_detail_info(38678060)
+    # get_last_review
