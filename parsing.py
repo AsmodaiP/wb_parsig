@@ -1,3 +1,4 @@
+from cmath import inf
 import logging
 from bs4 import BeautifulSoup
 from pyasn1_modules.rfc2459 import DistributionPoint
@@ -12,6 +13,7 @@ from selenium import webdriver
 import os
 from logging.handlers import RotatingFileHandler
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from cookie import COOKIE
 
 headers = {
     "Accept": "*/*",
@@ -36,10 +38,21 @@ def get_html(url):
     firefoxProfile.set_preference("dom.max_script_run_time", 10)
 
     driver = webdriver.Firefox(options=options, desired_capabilities=caps, firefox_profile=firefoxProfile)
+    driver.get('https://www.wildberries.ru/')
+
     try:
         driver.set_window_size(1920, 1080)
         driver.set_page_load_timeout(30)
+
         driver.get(url)
+        driver.delete_cookie('__wbl')
+        for coc in COOKIE['spb']:
+            coc['sameSite'] = 'Strict'
+            
+            driver.add_cookie(coc)
+        driver.get(url)
+        # with open('coockit.json')
+        # print(driver.get_cookies())
         SCROLL_PAUSE_TIME = 4
     
         last_height = driver.execute_script("return document.body.scrollHeight")
@@ -103,24 +116,28 @@ def get_raiting(html):
 
 def get_review_count(html):
     soup = BeautifulSoup(html, 'lxml')
-    review_count = soup.select('meta[itemprop="reviewCount"]')
-    if len(review_count) == 0:
-        return 0
-    rc = review_count[0].get('content')
+    try:
+        rc = soup.find('span', class_='same-part-kt__count-review').get_text()
+        rc  = ' '.join(word for word in rc.split()[:-1])
+    except:
+        rc = 0
     return rc
 
 
-def get_detail_info(id):
-    detailURL = f'https://www.wildberries.ru/catalog/{id}/detail.aspx?targetUrl=SP'
-    html = get_html(detailURL)
-    info = {
-        'articul': id,
-        'price': get_price_for_visa_and_MC(html),
-        'reviewCount': get_review_count(html),
-        'raiting': get_raiting(html),
-        'last_review': get_last_review(html)
-    }
-    logging.info(info)
+def get_all_reviews(html):
+    soup = BeautifulSoup(html, 'lxml')
+    feedbacks = soup.find_all('li', class_='comments__item feedback')
+    info = []
+    for feedback in feedbacks:
+        review_date = feedback.find('span', class_='feedback__date').get('content')
+        review_rating = feedback.find('span', class_='feedback__rating').get('class')[-1][-1]
+        review_text = feedback.find('p', class_='feedback__text').get_text()
+        info.append({
+            'hash': hash(review_text),
+            'review_date': review_date,
+            'review_rating': review_rating,
+            'review_text': review_text
+        })
     return info
  
 def get_last_review(html):
@@ -143,6 +160,21 @@ def get_last_review(html):
             'date': last_review_date,
         }
 
+def get_detail_info(id):
+    detailURL = f'https://www.wildberries.ru/catalog/{id}/detail.aspx?targetUrl=SP'
+    html = get_html(detailURL)
+    info = {
+        'articul': id,
+        'price': get_price_for_visa_and_MC(html),
+        'reviewCount': get_review_count(html),
+        'raiting': get_raiting(html),
+        'last_review': get_last_review(html),
+        'all_reviews': get_all_reviews(html)
+    }
+    logging.info(info)
+    return info
 if __name__ == '__main__':
-    get_detail_info(38678060)
+    detailURL = f'https://www.wildberries.ru/catalog/41928972/detail.aspx?targetUrl=SP'
+    html = get_html(detailURL)
+    get_all_reviews(html)
     # get_last_review
