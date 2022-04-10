@@ -103,12 +103,12 @@ def get_raiting(html):
 
 def get_review_count(html):
     soup = BeautifulSoup(html, 'lxml')
-    review_count = soup.select('meta[itemprop="reviewCount"]')
-    if len(review_count) == 0:
-        return 0
-    rc = review_count[0].get('content')
+    try:
+        rc = soup.find('span', class_='same-part-kt__count-review').get_text()
+        rc  = ' '.join(word for word in rc.split()[:-1])
+    except:
+        rc = 0
     return rc
-
 
 def get_detail_info(id):
     detailURL = f'https://www.wildberries.ru/catalog/{id}/detail.aspx?targetUrl=SP'

@@ -1,4 +1,5 @@
 
+
 import json
 from logging.handlers import RotatingFileHandler
 import logging
@@ -102,7 +103,7 @@ def update_sheet(spreadsheet_id, range_name, check_review=False):
                         f'Получение детальной информации для {row[4]}, {articulus}')
                     info = get_detail_info(articulus)
                     if check_review:
-                        check_last_review(articulus, info['last_review'], row[4])
+                        check_last_review(articulus, info['last_review'], row[6])
                     body = get_body(range_name, i, info, prev_price=row[9])
 
 
@@ -143,14 +144,14 @@ def check_last_review(articul, review, name):
         reviews = json.load(f)
         if articul in reviews:
             last_date = reviews[articul]['date']
-            if int(review['raiting']) < 6 and review['date'] != last_date:
+            if int(review['raiting']) < 4 and review['date'] != last_date:
                 print(review)
                 bot_for_reviews.send_message(
                     ID_FOR_REVIEWS,
                     f'Негативный неотвеченный отзыв ({review["raiting"]} звезды) на товар [«{name}»](https://www.wildberries.ru/catalog/{articul}/detail.aspx?targetUrl=SP)',
                     disable_web_page_preview=True,
                     parse_mode='Markdown')
-        elif int(review['raiting'])< 6:
+        elif int(review['raiting'])< 4:
             bot_for_reviews.send_message(
                 ID_FOR_REVIEWS,
                 f'Негативный неотвеченный отзыв ({review["raiting"]} звезды) на товар [«{name}»](https://www.wildberries.ru/catalog/{articul}/detail.aspx?targetUrl=SP)',
