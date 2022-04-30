@@ -12,4 +12,4 @@ ID_FOR_NOTIFICATION = os.environ['ID_FOR_NOTIFICATION'].split(',')
 SPREADSHEET_ID = os.environ[f'{client}_SPREADSHEET_ID']
 
 range_name = dt.datetime.now().strftime('%m.%Y')
-update_sheet(SPREADSHEET_ID,range_name, check_review=True)
+update_sheet(SPREADSHEET_ID,range_name, check_review=True, add_reviews=True)

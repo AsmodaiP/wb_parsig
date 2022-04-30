@@ -3,6 +3,7 @@
 import json
 from logging.handlers import RotatingFileHandler
 import logging
+from operator import add
 import os.path
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
@@ -85,7 +86,7 @@ def get_body(range_name, i, info, prev_price):
         body['data'] +=  {'range': f'{range_name}!I{i}', 'values': [[f'{prev_price} {dt.datetime.now().strftime("%H:%M  %d.%m")}']]},
     return body
 
-def update_sheet(spreadsheet_id, range_name, check_review=False):
+def update_sheet(spreadsheet_id, range_name, check_review=False, add_reviews=False):
     service = build('sheets', 'v4', credentials=credentials)
     sheet = service.spreadsheets()
     result = sheet.values().get(spreadsheetId=spreadsheet_id,
@@ -104,6 +105,8 @@ def update_sheet(spreadsheet_id, range_name, check_review=False):
                     info = get_detail_info(articulus)
                     if check_review:
                         check_last_review(articulus, info['last_review'], row[6])
+                    if add_reviews:
+                        update_all_reviews(articulus, reviews=info['all_reviews'], spreadsheet_id=spreadsheet_id)
                     body = get_body(range_name, i, info, prev_price=row[9])
 
 
@@ -112,8 +115,37 @@ def update_sheet(spreadsheet_id, range_name, check_review=False):
             except Exception as e:
                 logging.info(f'С {articulus} что-то не так')
                 logging.error('ошибка', exc_info=e)
-
             i += 1
+
+def update_all_reviews(article, reviews, spreadsheet_id):
+    range_name = 'Отзывы'
+    service = build('sheets', 'v4', credentials=credentials)
+    sheet = service.spreadsheets()
+    result = sheet.values().get(spreadsheetId=spreadsheet_id,
+                                range=f'{range_name}!E:E', majorDimension='ROWS').execute()
+    values = result.get('values', [])
+    position_for_place = len(values)+1
+    all_review_text = [value[0] for value in values]
+
+    body_data = []
+    for review in reviews:
+        if review['review_text'] in all_review_text:
+            continue
+        body_data.append(
+            [
+                {'range': f'{range_name}!A{position_for_place}', 'values': [[review['hash']]]},
+                {'range': f'{range_name}!C{position_for_place}', 'values': [[article]]},
+                {'range': f'{range_name}!B{position_for_place}', 'values': [[review['review_date']]]},
+                {'range': f'{range_name}!D{position_for_place}', 'values': [[review['review_rating']]]},
+                {'range': f'{range_name}!E{position_for_place}', 'values': [[review['review_text']]]},
+            ]
+        )
+        position_for_place+=1
+    body = {
+    'valueInputOption': 'USER_ENTERED',
+    'data': body_data
+    }
+    sheet.values().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
 
 
 
