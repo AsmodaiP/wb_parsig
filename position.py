@@ -174,10 +174,12 @@ def update_sheet(spreadsheet_id, range_name):
                         position = 'Нет в наличии'
                     letter_for_range = convert_to_column_letter(
                         position_for_place)
-                    position = f'{position}'
-                    data += {'range': f'{range_name}!{letter_for_range}{i}',
-                             'values': [[position]]},
+                    if position is not None: 
+                        position = f'{position}'
+                        data += {'range': f'{range_name}!{letter_for_range}{i}',
+                                'values': [[position]]},
             except Exception as e:
+                logging.warning(e)
                 pass
             i += 1
         body = {
