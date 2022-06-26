@@ -1,7 +1,11 @@
-from cmath import inf
+from cmath import inf, log
 import logging
+from ssl import get_default_verify_paths
+from typing import Dict
 from bs4 import BeautifulSoup
 from pyasn1_modules.rfc2459 import DistributionPoint
+from requests import request
+import requests
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 # import pandas
 # from pandas import ExcelWriter
@@ -13,6 +17,7 @@ from selenium import webdriver
 import os
 from logging.handlers import RotatingFileHandler
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from sympy import re
 from cookie import COOKIE
 
 headers = {
@@ -22,6 +27,9 @@ headers = {
 }
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+logging.getLogger()
+logger = logging.getLogger(__file__)
+logger.setLevel(logging.INFO)
 
 
 def get_html(url):
@@ -171,10 +179,49 @@ def get_detail_info(id):
         'last_review': get_last_review(html),
         'all_reviews': get_all_reviews(html)
     }
-    logging.info(info)
+    logging.debug(info)
     return info
+
+
+def get_price(card_info: Dict[str, str] ) -> int:
+    price = card_info['data']['products'][0]['salePriceU']
+    logging.debug(f'{price}')
+    return price
+
+def get_review_count(card_info) -> int:
+    review_count = card_info['data']['products'][0]['feedbacks']
+    logging.debug(f'{review_count}')
+    return review_count
+
+
+def get_imtId(card_info) -> int:
+    return card_info['data']['products'][0]['root']
+
+
+def get_raiting(card_info) -> int:
+    imtId = get_imtId(card_info)
+    url = 'https://public-feedbacks.wildberries.ru/api/v1/summary/full'
+    response = requests.post(url, json={'imtId': imtId, 'skip': 0, 'take': 30})
+    if response.status_code == 200:
+        raiting = response.json()['valuation']
+        logging.debug(f'{imtId}: {raiting}')
+
+
+def get_detail_info(id):
+    url = f'https://card.wb.ru/cards/detail?spp=19&regions=68,64,83,4,38,80,33,70,82,86,30,69,22,66,31,48,1,40&pricemarginCoeff=1.0&reg=1&appType=1&emp=0&locale=ru&lang=ru&curr=rub&couponsGeo=12,7,3,6,18,22,21&dest=-1075831,-79374,-367666,-2133466&nm={id}'
+    card_info = requests.get(url).json()
+
+    info = {
+        'articul': id,
+        'price': get_price(card_info),
+        'reviewCount': get_review_count(card_info),
+        'raiting': get_raiting(card_info),
+        'last_review': None,
+        'all_reviews': None
+    }
+    logging.debug(info)
+    return info
+    
 if __name__ == '__main__':
-    detailURL = f'https://www.wildberries.ru/catalog/41928972/detail.aspx?targetUrl=SP'
-    html = get_html(detailURL)
-    get_all_reviews(html)
-    # get_last_review 
+    print(get_detail_info(41928972))
+

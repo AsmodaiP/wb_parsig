@@ -12,6 +12,7 @@ import datetime as dt
 import telebot
 from dotenv import load_dotenv
 import string 
+import parsing_by_wb_api
 
 import sys
 import __main__
@@ -66,13 +67,10 @@ def get_body(range_name, i, info, prev_price):
         info['price']=' Нет в наличии'
     
     prev_price = prev_price.strip().replace(' ', '').replace(' ', '')
-    info['price'] = info['price'].strip().replace(' ', '').replace(' ', '')
     if info['price'] == '':
         info['raiting'] = 'Нет в наличии'
         info['price']=' Нет в наличии'
 
-    prev_price = ''.join([x if x in string.printable else '' for x in prev_price])
-    info['price'] = ''.join([x if x in string.printable else '' for x in info['price']])
     body = {
     'valueInputOption': 'USER_ENTERED',
     'data': [
@@ -82,7 +80,7 @@ def get_body(range_name, i, info, prev_price):
             {'range': f'{range_name}!B{i}', 'values': [[dt.datetime.now().strftime("%H:%M  %d.%m.%y")]]}
     ]
     }
-    if info['price'] != 'Нет в наличии'  and info['price'].strip() != prev_price.strip():
+    if info['price'] != 'Нет в наличии'  and info['price'] != prev_price.strip():
         body['data'] +=  {'range': f'{range_name}!I{i}', 'values': [[f'{prev_price} {dt.datetime.now().strftime("%H:%M  %d.%m")}']]},
     return body
 
@@ -102,13 +100,12 @@ def update_sheet(spreadsheet_id, range_name, check_review=False, add_reviews=Fal
                 if articulus.isdigit():
                     logging.info(
                         f'Получение детальной информации для {row[4]}, {articulus}')
-                    info = get_detail_info(articulus)
+                    info = parsing_by_wb_api.get_detail_info(articulus)
                     if check_review:
                         check_last_review(articulus, info['last_review'], row[6])
                     if add_reviews:
                         update_all_reviews(articulus, reviews=info['all_reviews'], spreadsheet_id=spreadsheet_id)
                     body = get_body(range_name, i, info, prev_price=row[9])
-
 
                     sheet.values().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
                     bot.send_message(295481377, f'Товар [«{row[4]}»](https://www.wildberries.ru/catalog/{articulus}/detail.aspx?targetUrl=SP) \n Цена - {info["price"]} ,\n Рейтинг - {info["raiting"]}', parse_mode='Markdown')
@@ -193,6 +190,4 @@ def check_last_review(articul, review, name):
     with open('reviews.json', 'w') as f:
         json.dump(reviews, f, indent=4)
 if __name__ == '__main__':
-    
-    bot_for_reviews.send_message(1126541068, '22')
-    pass
+    update_sheet('1m_IcullUpEP4yOOnOH7ojBzbPpn38tFtVNyS40yKJjQ','06.2022')
