@@ -55,4 +55,4 @@ def get_detail_info(id):
     return info
 
 if __name__ == '__main__':
-    get_detail_info(41928972)
+    get_detail_info(81311458)
