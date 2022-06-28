@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)-s %(asctime)-s %(me
 
 
 def get_price(card_info: Dict[str, str]) -> int:
-    price = card_info['data']['products'][0]['salePriceU']
+    price = card_info['data']['products'][0]['extended']['basicPriceU']
     logging.debug(f'{price}')
     return price//100
 
@@ -55,4 +55,4 @@ def get_detail_info(id):
     return info
 
 if __name__ == '__main__':
-    get_detail_info(81311458)
+    get_detail_info(35214691)
