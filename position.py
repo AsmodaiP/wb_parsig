@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 import datetime as dt
+from rsa import verify
 import telebot
 from dotenv import load_dotenv
 import sys
@@ -109,7 +110,7 @@ async def parser(query, target_id):
                   "&stores=117673,122258,122259,125238,125239,125240,6159,507,3158,117501,120602,120762,6158,121709,124731,159402,2737,130744,117986,1733,686,132043,1193"
             if page < 50:
                 logging.info('Парсинг страницы ' + str(page))
-                async with session.get(url=url, headers=headers) as r:
+                async with session.get(url=url, headers=headers, ssl=False) as r:
                     html_cod = await r.text()
                     try:
                         products = json.loads(html_cod)['data']['products']
@@ -269,4 +270,7 @@ def check_sheet_exitst_by_title(title):
 
 
 if __name__ == '__main__':
-    pass
+    loop = asyncio.get_event_loop()
+    position = loop.run_until_complete(
+        parser("платье женское вечернее короткое", int(81365140)))
+    print(position)

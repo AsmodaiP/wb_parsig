@@ -2,11 +2,11 @@
 
 import logging
 import os.path
+from time import sleep
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 import datetime as dt
 import parsing_by_wb_api
-
 
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
@@ -19,6 +19,7 @@ credentials = service_account.Credentials.from_service_account_file(
 INDEX_OF_FIRST = 1
 START_POSITION_FOR_PLACE = 17
 
+
 def update_sheet(spreadsheet_id, range_name):
     service = build('sheets', 'v4', credentials=credentials)
     sheet = service.spreadsheets()
@@ -30,25 +31,27 @@ def update_sheet(spreadsheet_id, range_name):
     for row in values:
         logging.info(row[:15])
         try:
-            article = row[7]
-            info = parsing_by_wb_api.get_detail_info(article)
+            article = row[6]
+            info = parsing_by_wb_api.get_detail_info(int(article))
             previous_price = row[9].strip()
-            if info['price'] != previous_price:
-                data += [{'range': f'{range_name}!I{i}', 'values': [[f'{previous_price} {dt.datetime.now().strftime("%H:%M  %d.%m")}']]}]
+            if str(info['price']) not in previous_price:
+                data += [{'range': f'{range_name}!H{i}',
+                          'values': [[f'{previous_price} {dt.datetime.now().strftime("%H:%M  %d.%m")}']]}]
             data += [
                 {'range': f'{range_name}!J{i}', 'values': [[info['price']]]},
+                {'range': f'{range_name}!I{i}', 'values': [[info['client_price']]]},
                 {'range': f'{range_name}!L{i}:M{i}', 'values': [[info['raiting'], info['reviewCount']]]},
-                {'range': f'{range_name}!B{i}', 'values': [[dt.datetime.now().strftime("%H:%M  %d.%m.%y")]]}
             ]
         except Exception as e:
-            logging.info(f'С {article} что-то не так')
+            logging.info(f'С {article} что-то не так', exc_info=e)
         i += 1
     body = {
         'valueInputOption': 'USER_ENTERED',
         'data': data
-        }
+    }
     sheet.values().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
     data = []
 
+
 if __name__ == '__main__':
-    update_sheet('1m_IcullUpEP4yOOnOH7ojBzbPpn38tFtVNyS40yKJjQ', '06.2022')
+        update_sheet('1m_IcullUpEP4yOOnOH7ojBzbPpn38tFtVNyS40yKJjQ', '06.2022')

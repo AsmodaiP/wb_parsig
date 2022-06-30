@@ -14,8 +14,13 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)-s %(asctime)-s %(me
 
 
 def get_price(card_info: Dict[str, str]) -> int:
-    price = card_info['data']['products'][0]['extended']['basicPriceU']
-    logging.debug(f'{price}')
+    try:
+        price = card_info['data']['products'][0]['extended']['promoPriceU']
+        if 'promoPriceU' in card_info['data']['products'][0]['extended']:
+            price = card_info['data']['products'][0]['extended']['promoPriceU']
+    except KeyError:
+        price = card_info['data']['products'][0]['extended'].get('basicPriceU', card_info['data']['products'][0]['priceU'])
+
     return price//100
 
 
@@ -27,6 +32,12 @@ def get_review_count(card_info) -> int:
 
 def get_imtId(card_info) -> int:
     return card_info['data']['products'][0]['root']
+
+
+def get_client_price(card_info) -> int:
+
+    price_after_spp = card_info['data']['products'][0]['extended']['clientPriceU']//100
+    return price_after_spp
 
 
 def get_raiting(card_info) -> int:
@@ -42,10 +53,11 @@ def get_raiting(card_info) -> int:
 def get_detail_info(id):
     url = f'https://card.wb.ru/cards/detail?spp=19&regions=68,64,83,4,38,80,33,70,82,86,30,69,22,66,31,48,1,40&pricemarginCoeff=1.0&reg=1&appType=1&emp=0&locale=ru&lang=ru&curr=rub&couponsGeo=12,7,3,6,18,22,21&dest=-1075831,-79374,-367666,-2133466&nm={id}'
     card_info = requests.get(url).json()
-
+    print(card_info)
     info = {
         'articul': id,
         'price': get_price(card_info),
+        'client_price': get_client_price(card_info),
         'reviewCount': get_review_count(card_info),
         'raiting': get_raiting(card_info),
         'last_review': None,
@@ -54,5 +66,6 @@ def get_detail_info(id):
     logging.info(info)
     return info
 
+
 if __name__ == '__main__':
-    get_detail_info(35214691)
+    get_detail_info(81311458)

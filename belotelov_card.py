@@ -3,6 +3,7 @@ import os
 import sys
 # from card import update_sheet
 import datetime as dt
+from time import time
 
 from dotenv import load_dotenv
 from update_card import update_sheet
@@ -15,4 +16,6 @@ ID_FOR_NOTIFICATION = os.environ['ID_FOR_NOTIFICATION'].split(',')
 SPREADSHEET_ID = os.environ[f'{client}_SPREADSHEET_ID']
 
 range_name = dt.datetime.now().strftime('%m.%Y')
-update_sheet(SPREADSHEET_ID,range_name)
+
+while True:
+    update_sheet(SPREADSHEET_ID,range_name)
