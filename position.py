@@ -155,7 +155,7 @@ def update_sheet(spreadsheet_id, range_name):
                 i += 1
                 continue
             try:
-                articulus = row[7]
+                articulus = row[6]
                 price = row[11]
                 logging.info(f'{articulus} {price}')
                 position_for_place = START_POSITION_FOR_PLACE + \
@@ -164,7 +164,7 @@ def update_sheet(spreadsheet_id, range_name):
                     if int(articulus) in blacklist:
                         i += 1
                         continue
-                    new_query = row[5]
+                    new_query = row[4]
                     if len(new_query) > 0:
                         query = new_query
                     if not price == 'Нет в наличии':
