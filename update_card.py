@@ -33,8 +33,9 @@ def update_sheet(spreadsheet_id, range_name):
         try:
             article = row[6]
             info = parsing_by_wb_api.get_detail_info(int(article))
-            previous_price = row[9].strip()
-            if str(info['price']) not in previous_price:
+            previous_price = ''.join(filter(str.isalnum, row[9]))
+            if str(info['price']).replace(' ', '') != previous_price:
+                print(f'{previous_price} \n\n\n\n\n')
                 data += [{'range': f'{range_name}!H{i}',
                           'values': [[f'{previous_price} {dt.datetime.now().strftime("%H:%M  %d.%m")}']]}]
             data += [
