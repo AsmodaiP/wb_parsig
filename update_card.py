@@ -1,5 +1,6 @@
 
 
+
 import logging
 import os.path
 from time import sleep
@@ -29,30 +30,45 @@ def update_sheet(spreadsheet_id, range_name):
     data = []
     i = INDEX_OF_FIRST
     for row in values:
-        logging.info(row[:15])
-        try:
-            article = row[6]
-            info = parsing_by_wb_api.get_detail_info(int(article))
-            previous_price = ''.join(filter(str.isalnum, row[9]))
-            if str(info['price']).replace(' ', '') != previous_price:
-                print(f'{previous_price} \n\n\n\n\n')
-                data += [{'range': f'{range_name}!H{i}',
-                          'values': [[f'{previous_price} {dt.datetime.now().strftime("%H:%M  %d.%m")}']]}]
-            data += [
-                {'range': f'{range_name}!J{i}', 'values': [[info['price']]]},
-                {'range': f'{range_name}!I{i}', 'values': [[info['client_price']]]},
-                {'range': f'{range_name}!L{i}:M{i}', 'values': [[info['raiting'], info['reviewCount']]]},
-            ]
-        except Exception as e:
-            logging.info(f'С {article} что-то не так', exc_info=e)
+        if i > 0:
+            try:
+                print(row)
+                article = row[6]
+                info = parsing_by_wb_api.get_detail_info(int(article))
+
+                try:
+                    previous_price = ''.join(filter(str.isalnum, row[9]))
+                except:
+                    previous_price = '0'
+                if str(info['price']).replace(' ', '') != previous_price:
+                    print(f'{previous_price} \n\n\n\n\n')
+                    data += [{'range': f'{range_name}!H{i}',
+                            'values': [[f'{previous_price} {dt.datetime.now().strftime("%H:%M  %d.%m")}']]}]
+                data += [
+                    {'range': f'{range_name}!J{i}', 'values': [[info['price']]]},
+                    {'range': f'{range_name}!I{i}', 'values': [[info['client_price']]]},
+                    {'range': f'{range_name}!L{i}:M{i}', 'values': [[info['raiting'], info['reviewCount']]]},
+                ]
+                body = {
+                    'valueInputOption': 'USER_ENTERED',
+                    'data': data
+                }
+                sheet.values().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
+
+
+                # print(data)
+            except Exception as e:
+                print(e)
+                logging.error(e)
+                logging.info(f'С {article} что-то не так', exc_info=e)
         i += 1
-    body = {
-        'valueInputOption': 'USER_ENTERED',
-        'data': data
-    }
-    sheet.values().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
+    # body = {
+    #     'valueInputOption': 'USER_ENTERED',
+    #     'data': data
+    # }
+    # sheet.values().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
     data = []
 
 
 if __name__ == '__main__':
-        update_sheet('1m_IcullUpEP4yOOnOH7ojBzbPpn38tFtVNyS40yKJjQ', '06.2022')
+        update_sheet('1LMqyN5w81xnRfvNf0CE75ozH7zMcTLhvYiNjTxHDURo', '09.2022')

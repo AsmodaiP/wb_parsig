@@ -16,6 +16,5 @@ ID_FOR_NOTIFICATION = os.environ['ID_FOR_NOTIFICATION'].split(',')
 SPREADSHEET_ID = os.environ[f'{client}_SPREADSHEET_ID']
 
 range_name = dt.datetime.now().strftime('%m.%Y')
-
 while True:
     update_sheet(SPREADSHEET_ID,range_name)

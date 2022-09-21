@@ -34,7 +34,7 @@ bot = telebot.TeleBot(TELEGRAM_TOKEN)
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, 'credentials_service.json')
+SERVICE_ACCOUNT_FILE = '/home/lotelove/wb/SERVICE/credentials_service.json'
 credentials = service_account.Credentials.from_service_account_file(
     SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
@@ -179,6 +179,11 @@ def update_sheet(spreadsheet_id, range_name):
                         position = f'{position}'
                         data += {'range': f'{range_name}!{letter_for_range}{i}',
                                 'values': [[position]]},
+                        body = {
+            'valueInputOption': 'USER_ENTERED',
+            'data': data}
+                        print(body)
+                        sheet.values().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
             except Exception as e:
                 logging.warning(e)
                 pass
