@@ -90,6 +90,8 @@ def get_detail_info(id):
     card_info = requests.get(url).json()
     
     reviews = get_reviews(id)
+    print('получены отзывы')
+
     info = {
         'articul': id,
         'price': get_price(card_info),
@@ -110,12 +112,17 @@ def get_all_feedbacks(rootId):
     while True:
         raw_data["skip"] = skip
         response = requests.post("https://public-feedbacks.wildberries.ru/api/v1/summary/full", json=raw_data)
+        print(response)
+        if response.status_code != 200:
+            break
         if response.status_code == 200:
             data = response.json()['feedbacks']
+            # print(data)
             if data == [] or data is None:
                 break
             all_feedbacks.extend(data)
             skip += 30
+            # time.sleep(3)
     return all_feedbacks
 
 def search_rootId(imtId):
@@ -148,5 +155,6 @@ if __name__ == '__main__':
     # for i in range(10):
         
     #     print(get_spp())
+
 
 
